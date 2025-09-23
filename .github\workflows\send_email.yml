@@ -1,0 +1,110 @@
+name: Send Email
+
+on:
+#  push:
+#    paths-ignore:
+#      - 'logs/**'
+  workflow_dispatch:   # 手动触发
+    inputs:
+      email_user:
+        description: "发件邮箱"
+        required: false
+        default: ""
+      email_pass:
+        description: "邮箱密码/授权码"
+        required: false
+        default: ""
+      smtp_server:
+        description: "SMTP 服务器"
+        required: false
+        default: ""
+      smtp_port:
+        description: "SMTP 端口"
+        required: false
+        default: ""
+      smtp_ssl:
+        description: "是否启用SSL (true/false)"
+        required: false
+        default: ""
+      email_to:
+        description: "收件人邮箱"
+        required: false
+        default: ""
+      messages:
+        description: "MESSAGES (JSON字符串)"
+        required: false
+        default: "[]"
+      enable_log:
+        description: "日志记录 (one/date/unique/None)"
+        required: false
+        default: ""
+
+  workflow_call:   # 允许 CF 调用（通过 API 触发并传参）
+    inputs:
+      email_user:
+        required: false
+        type: string
+      email_pass:
+        required: false
+        type: string
+      smtp_server:
+        required: false
+        type: string
+      smtp_port:
+        required: false
+        type: string
+      smtp_ssl:
+        required: false
+        type: string
+      email_to:
+        required: false
+        type: string
+      messages:
+        required: false
+        type: string
+      enable_log:
+        required: false
+        type: string
+
+permissions:
+  contents: write   # 允许写入仓库
+
+jobs:
+  send-mail:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 获取完整历史，避免 push 冲突
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run MAIL script
+        env:
+          EMAIL_USER: ${{ secrets.EMAIL_USER || inputs.email_user || github.event.inputs.email_user }}
+          EMAIL_PASS: ${{ secrets.EMAIL_PASS || inputs.email_pass || github.event.inputs.email_pass }}
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER || inputs.smtp_server || github.event.inputs.smtp_server }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT || inputs.smtp_port || github.event.inputs.smtp_port }}
+          SMTP_SSL: ${{ secrets.SMTP_SSL || inputs.smtp_ssl || github.event.inputs.smtp_ssl }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO || inputs.email_to || github.event.inputs.email_to }}
+          MESSAGES: ${{ inputs.messages || github.event.inputs.messages || secrets.MESSAGES }}
+          ENABLE_LOG: ${{ secrets.ENABLE_LOG || inputs.enable_log || github.event.inputs.enable_log }}
+        run: python send_email.py
+
+      - name: Commit & Push logs
+        if: always()
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          mkdir -p logs
+          git add logs/
+          timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+          git commit -m "Update logs: $timestamp" || echo "No changes to commit"
+
+          # 避免推送被拒绝：先拉取最新
+          git pull --rebase origin main
+          git push origin main

@@ -125,6 +125,8 @@ curl -X POST \
 说明
 
 - `<YOUR_GITHUB_TOKEN>` 必须是 **具有 repo 权限的 PAT（Personal Access Token）** 或者 **仓库的 GitHub Actions Token**。
+  - https://github.com/settings/personal-access-tokens -> Fine-grained personal access tokens -> Add permissions -> Actions -> Read and write
+
 - `<OWNER>` 替换为你的 GitHub 用户名或组织名。
 - `<REPO>` 替换为你的仓库名，默认为 `Reacf`。
 - `messages` 的值必须是 **转义后的 JSON 字符串**。
@@ -166,4 +168,5 @@ HTML 模板文件默认从 `index.html` 加载，支持以下占位符：
 
 - Gmail、Outlook 等需要开启 **应用专用密码**，不能用普通登录密码。
 - QQ 邮箱需要开启 **SMTP 服务** 并使用授权码。
+
 - 建议用 **专门的发件邮箱**，避免被封。
